@@ -2,6 +2,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import requests
 import numpy as np
+from PIL import Image
 
 url = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson'
 response = requests.get(url)
@@ -9,6 +10,9 @@ data = response.json()
 
 # Cria um objeto GeoDataFrame a partir do arquivo GeoJSON
 gdf = gpd.GeoDataFrame.from_features(data['features'])
+
+# Encontra o índice correspondente ao estado de São Paulo
+#sp_index = gdf[gdf['name'] == 'São Paulo'].index[0]
 
 # Cria uma lista de valores aleatórios para os estados (substitua com seus dados reais)
 valores = np.random.rand(len(gdf))
@@ -36,5 +40,14 @@ gdf.plot(ax=ax, linewidth=0.8, edgecolor='0.8', facecolor=colors)
 # Personaliza o gráfico
 ax.axis('off')
 
-# Exibe o gráfico
-plt.show()  
+# Salva a figura como um arquivo PNG
+plt.savefig('mapa.png', bbox_inches='tight', pad_inches=0)
+
+# Fecha a figura para liberar memória
+plt.close(fig)
+
+# Carrega a imagem salva como um objeto Image
+image = Image.open('mapa.png')
+
+# Exibe a imagem
+image.show()
