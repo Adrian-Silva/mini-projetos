@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Map Image Viewer</title>
+</head>
+
+<body>
+    <h1>Map Image Viewer</h1>
+    <button onclick="loadMapImage()">Load Map Image</button>
+    <div id="mapImageContainer"></div>
+
+    <script>
+        function loadMapImage() {
+            // Faz uma requisição para o servidor desejado
+            fetch('http://localhost:5000/get_map_image')
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error('Erro na resposta do servidor');
+                    }
+                })
+                .then(blob => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const imageUrl = reader.result;
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        document.getElementById('mapImageContainer').innerHTML = '';
+                        document.getElementById('mapImageContainer').appendChild(img);
+                    };
+                    reader.readAsDataURL(blob);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+    </script>
+
+</body>
+
+</html>
