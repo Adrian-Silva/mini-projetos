@@ -1,0 +1,23 @@
+:root {
+    --primary-color: #1a6e10;
+    --secundary-color: white;
+}
+
+.titleCard {
+    display: flex;
+    align-items: center;
+}
+
+.line {
+    height: 30px;
+    width: 5px;
+    min-width: 5px;
+    border-radius: 3px;
+    margin-right: 24px;
+    background-color: var(--primary-color);
+}
+
+a.link-removable {
+    text-decoration: none;
+    color: var(--primary-color);
+}
