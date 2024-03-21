@@ -1,6 +1,6 @@
 from flask import render_template
 from app import app
-from app.models import reports
+from app.models.report import reports
 
 @app.route('/')
 def index():

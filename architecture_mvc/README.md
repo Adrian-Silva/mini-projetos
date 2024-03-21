@@ -4,12 +4,16 @@ projeto/
 │
 ├── app/
 │   ├── __init__.py
-│   ├── models.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── report.py
+│   │   ├── ...
 │   ├── views/
-│   │   ├──views.py
+│   │   ├── __init__.py
+│   │   ├── views.py
 │   │   ├── ...
 │   └── templates/
-│       ├── relatorios.html
+│       ├── index.html
 │       └── ...
 │
 ├── static/
@@ -27,9 +31,26 @@ projeto/
 
 # Arquivos
 
-### init.py:
+### `projeto/app/__init__.py`:
 
-- Este arquivo inicializa o aplicativo Flask.
+No Python, quando um pacote é importado, o interpretador procura pelo arquivo `__init__.py` dentro desse pacote e executa qualquer código presente nele. Portanto, ao importar o pacote app, o arquivo `__init__.py` dentro desse pacote é automaticamente executado. 
+
+Se o seu pacote models contém várias classes de modelos importantes como User, Post e Comment, importá-las no arquivo `__init__.py` permite que os usuários do pacote as importem diretamente do pacote models:
+
+```python
+# app/models/__init__.py
+
+from .user import User
+from .post import Post
+from .comment import Comment
+```
+Com isso, os usuários podem importar essas classes diretamente do pacote models em outras partes do código sem ter que especificar o módulo de origem:
+```python
+from app.models import User, Post, Comment
+```
+Agora no contexto da arquitetura atual o `__init__.py`
+
+- Inicializa o aplicativo Flask.
 - Define configurações globais do aplicativo, como a chave secreta.
 - Importa as rotas e modelos do aplicativo.
 
