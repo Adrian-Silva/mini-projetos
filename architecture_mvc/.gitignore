@@ -1,0 +1,37 @@
+# Arquivos Python
+*.pyc
+__pycache__/
+
+# Arquivos de ambiente virtual (por exemplo, criados com virtualenv ou venv)
+venv/
+env/
+
+# Arquivos de log
+*.log
+
+# Cache de arquivos
+.cache/
+
+# Arquivos de banco de dados
+*.sqlite
+*.db
+
+# Arquivos de saída/compilação
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Diretórios de build
+build/
+dist/
+egg-info/
+
+# Arquivos de configuração do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos da IDE
+.idea
+
+# Outros arquivos específicos do seu projeto que você deseja ignorar
