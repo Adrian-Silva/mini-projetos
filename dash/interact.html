@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Editor Estilo Word</title>
+
+  <!-- Quill -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0-dev.4/dist/quill.snow.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      margin: 20px auto;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page.a4 {
+      width: 210mm;
+      height: 297mm;
+    }
+
+    .page.a4-landscape {
+      width: 297mm;
+      height: 210mm;
+    }
+
+    .page.widescreen {
+      width: 330mm;
+      height: 185mm;
+    }
+
+
+    .page.no-margin {
+      margin: 0;
+    }
+
+    .draggable {
+      width: 400px;
+      height: 300px;
+      background-color: white;
+      border: 2px solid #F25722;
+      border-radius: 8px;
+      position: absolute;
+      user-select: none;
+      overflow: hidden;
+      cursor: move;
+    }
+
+    .editable .ql-editor {
+      height: 100%;
+      outline: none;
+    }
+
+    #toolbar-container {
+      display: none;
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background: #f9fafb;
+      border-left: 1px solid #ddd;
+      padding: 16px;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+      z-index: 999;
+      box-sizing: border-box;
+    }
+
+    #toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 8px;
+      border: none;
+      background: black;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    @media print {
+
+      button,
+      #toolbar-container,
+      select,
+      label {
+        display: none !important;
+      }
+
+      .draggable {
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Botões -->
+  <div style="text-align:center;">
+    <button onclick="inserirGrafico()">Inserir Gráfico</button>
+    <button onclick="inserirTexto()">Inserir Texto</button>
+    <button onclick="printPage()">Imprimir Página</button>
+    <button id="marginToggle" onclick="toggleMargins()">Remover Margens</button>
+
+    <label for="pageFormat">Formato da Página:</label>
+    <select id="pageFormat" onchange="changePageFormat(this.value)">
+      <option value="a4">A4 (Padrão)</option>
+      <option value="a4-landscape">A4 Paisagem</option>
+      <option value="widescreen">Widescreen</option>
+    </select>
+  </div>
+
+  <!-- Página central estilo Word -->
+  <div id="pagina-central" class="page a4"></div>
+
+  <!-- Toolbar lateral -->
+  <div id="toolbar-container">
+    <h4>Editor de Texto</h4>
+    <div id="toolbar">
+      <span class="ql-formats">
+        <select class="ql-header">
+          <option selected></option>
+          <option value="1"></option>
+          <option value="2"></option>
+        </select>
+        <select class="ql-font"></select>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-bold"></button>
+        <button class="ql-italic"></button>
+        <button class="ql-underline"></button>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-list" value="ordered"></button>
+        <button class="ql-list" value="bullet"></button>
+      </span>
+      <span class="ql-formats">
+        <select class="ql-align"></select>
+        <select class="ql-color"></select>
+        <select class="ql-background"></select>
+      </span>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0-dev.4/dist/quill.min.js"></script>
+
+  <script>
+    let currentFormat = 'a4';
+    let contador = 0;
+    let removeMargins = false; // <- controla se deve imprimir sem margens
+
+    function toggleMargins() {
+      removeMargins = !removeMargins;
+
+      const btn = document.querySelector('#marginToggle');
+      btn.innerText = removeMargins ? "Restaurar Margens" : "Remover Margens";
+    }
+
+    function printPage() {
+      const existingStyle = document.getElementById('dynamic-print-style');
+      if (existingStyle) existingStyle.remove();
+
+      const style = document.createElement('style');
+      style.id = 'dynamic-print-style';
+
+      let marginValue = removeMargins ? '0mm' : '10mm';
+
+      // CSS geral para zerar margens/paddings de elementos principais
+      const generalReset = `
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    #pagina-central {
+      margin: 0 auto !important;
+    }
+  `;
+
+      let pageSizeCSS = '';
+
+      if (currentFormat === 'a4') {
+        pageSizeCSS = `@page { size: A4 portrait; margin: ${marginValue} !important; }`;
+      } else if (currentFormat === 'a4-landscape') {
+        pageSizeCSS = `@page { size: A4 landscape; margin: ${marginValue} !important; }`;
+      } else if (currentFormat === 'widescreen') {
+        pageSizeCSS = `@page { size: 330mm 185mm; margin: ${marginValue} !important; }`;
+      }
+
+      style.innerHTML = pageSizeCSS + generalReset;
+      document.head.appendChild(style);
+
+      window.print();
+
+      setTimeout(() => {
+        if (style.parentNode) {
+          style.remove();
+        }
+      }, 1000);
+    }
+
+    function changePageFormat(format) {
+      currentFormat = format;
+
+      const pagina = document.getElementById('pagina-central');
+      pagina.classList.remove('a4', 'a4-landscape', 'widescreen');
+      pagina.classList.add(format);
+    }
+
+
+
+    function makeDraggable(el) {
+      interact(el)
+        .draggable({
+          listeners: {
+            move(event) {
+              const target = event.target;
+              const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+              const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+              target.style.transform = `translate(${x}px, ${y}px)`;
+              target.setAttribute('data-x', x);
+              target.setAttribute('data-y', y);
+            }
+          },
+          modifiers: [
+            interact.modifiers.restrictRect({
+              restriction: '#pagina-central',
+              endOnly: true
+            })
+          ]
+        })
+        .resizable({
+          edges: { left: true, right: true, bottom: true, top: true },
+          listeners: {
+            move(event) {
+              let { x, y } = event.target.dataset;
+              x = parseFloat(x) || 0;
+              y = parseFloat(y) || 0;
+
+              event.target.style.width = `${event.rect.width}px`;
+              event.target.style.height = `${event.rect.height}px`;
+
+              x += event.deltaRect.left;
+              y += event.deltaRect.top;
+
+              event.target.style.transform = `translate(${x}px, ${y}px)`;
+              event.target.dataset.x = x;
+              event.target.dataset.y = y;
+
+              const chartContainer = event.target.querySelector('.grafico');
+              if (chartContainer && Highcharts.charts.length) {
+                const chart = Highcharts.charts.find(c => c && c.renderTo === chartContainer);
+                if (chart) chart.setSize(event.rect.width, event.rect.height, false);
+              }
+            }
+          },
+          modifiers: [
+            interact.modifiers.restrictSize({
+              min: { width: 150, height: 100 }
+            })
+          ]
+        });
+    }
+
+    function inserirGrafico() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'draggable';
+      wrapper.style.top = '100px';
+      wrapper.style.left = '100px';
+      wrapper.id = `grafico-${contador}`;
+
+      const inner = document.createElement('div');
+      inner.className = 'grafico';
+      inner.style.width = '100%';
+      inner.style.height = '100%';
+      inner.id = `grafico-container-${contador}`;
+      wrapper.appendChild(inner);
+
+      document.getElementById('pagina-central').appendChild(wrapper);
+
+      Highcharts.chart(inner.id, {
+        chart: { type: 'line', animation: false },
+        title: { text: 'Gráfico Dinâmico' },
+        xAxis: { categories: ['A', 'B', 'C'] },
+        yAxis: { title: { text: 'Valores' } },
+        series: [{ name: 'Série A', data: [10, 20, 30] }]
+      });
+
+      makeDraggable(wrapper);
+      contador++;
+    }
+
+    function inserirTexto() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'draggable editable';
+      wrapper.style.top = '150px';
+      wrapper.style.left = '150px';
+
+      const inner = document.createElement('div');
+      inner.id = `editor-${contador}`;
+      inner.innerHTML = 'Clique aqui e edite.';
+      wrapper.appendChild(inner);
+
+      document.getElementById('pagina-central').appendChild(wrapper);
+      makeDraggable(wrapper);
+
+      const quill = new Quill(`#${inner.id}`, {
+        theme: 'snow',
+        modules: {
+          toolbar: {
+            container: '#toolbar'
+          }
+        }
+      });
+
+      wrapper.addEventListener('click', (e) => {
+        document.getElementById('toolbar-container').style.display = 'block';
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', (e) => {
+        const clickedInsideEditor = wrapper.contains(e.target);
+        const clickedInsideToolbar = document.getElementById('toolbar-container').contains(e.target);
+        if (!clickedInsideEditor && !clickedInsideToolbar) {
+          document.getElementById('toolbar-container').style.display = 'none';
+        }
+      });
+
+      contador++;
+    }
+  </script>
+</body>
+
+</html>
